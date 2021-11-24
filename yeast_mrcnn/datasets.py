@@ -9,6 +9,8 @@ import numpy as np
 import tifffile as tiff
 import torch
 
+from ._util import imread
+
 
 class YeaZDataset(torch.utils.data.Dataset):
     def __init__(self, root, transforms):
@@ -88,12 +90,12 @@ class BBBCDataset(torch.utils.data.Dataset):
         mask_files = sorted(os.listdir(os.path.join(sub_path, "masks")))
 
         img_path = os.path.join(sub_path, "images", img_file)
-        img = plt.imread(img_path).astype(np.float32)[..., 0]
+        img = imread(img_path).astype(np.float32)[..., 0]
         img = (img - img.min()) / (img.max() - img.min())
         img = img[None, ...]
 
         masks = np.array(
-            [plt.imread(os.path.join(sub_path, "masks", m)) for m in mask_files]
+            [imread(os.path.join(sub_path, "masks", m)) for m in mask_files]
         )
 
         # get bounding box coordinates for each mask
