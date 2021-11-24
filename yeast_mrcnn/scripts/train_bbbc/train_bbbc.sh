@@ -1,0 +1,2 @@
+#SBATCH -p gpu
+
