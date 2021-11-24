@@ -2,11 +2,13 @@ __all__ = [
     "YeaZDataset",
     "BBBCDataset",
 ]
-import torch
-import numpy as np
 import glob
-import tifffile as tiff
 import os
+
+import numpy as np
+import tifffile as tiff
+import torch
+
 
 class YeaZDataset(torch.utils.data.Dataset):
     def __init__(self, root, transforms):
@@ -14,20 +16,21 @@ class YeaZDataset(torch.utils.data.Dataset):
         self.transforms = transforms
         # load all image files, sorting them to
         # ensure that they are aligned
-        self.imgs = sorted(glob.glob(root+"*im.tif"))
-        self.masks = sorted(glob.glob(root+"*mask.tif"))
-        assert(len(self.imgs)==len(self.masks))
+        self.imgs = sorted(glob.glob(root + "*im.tif"))
+        self.masks = sorted(glob.glob(root + "*mask.tif"))
+        assert len(self.imgs) == len(self.masks)
+
     def __getitem__(self, idx):
         # load images and masks
         img_path = self.imgs[idx]
         mask_path = self.masks[idx]
-        
+
         img = tiff.imread(img_path).astype(np.float32)
-        img = (img-img.min())/(img.max()-img.min())
-        img = img[None,...]
-        
+        img = (img - img.min()) / (img.max() - img.min())
+        img = img[None, ...]
+
         mask = tiff.imread(mask_path)
-        
+
         # instances are encoded as different colors
         obj_ids = np.unique(mask)[1:]
 
@@ -71,6 +74,7 @@ class YeaZDataset(torch.utils.data.Dataset):
     def __len__(self):
         return len(self.imgs)
 
+
 class BBBCDataset(torch.utils.data.Dataset):
     def __init__(self, root, transforms):
         self.root = root
@@ -80,16 +84,18 @@ class BBBCDataset(torch.utils.data.Dataset):
     def __getitem__(self, idx):
         # load images and masks
         sub_path = os.path.join(self.root, self.subdirs[idx])
-        img_file = os.listdir(os.path.join(sub_path,"images"))[0]
-        mask_files = sorted(os.listdir(os.path.join(sub_path,"masks")))
-        
-        img_path = os.path.join(sub_path,'images',img_file)
-        img = plt.imread(img_path).astype(np.float32)[...,0]
-        img = (img-img.min())/(img.max()-img.min())
-        img = img[None,...]
-        
-        masks = np.array([plt.imread(os.path.join(sub_path, "masks", m)) for m in mask_files])
-        
+        img_file = os.listdir(os.path.join(sub_path, "images"))[0]
+        mask_files = sorted(os.listdir(os.path.join(sub_path, "masks")))
+
+        img_path = os.path.join(sub_path, "images", img_file)
+        img = plt.imread(img_path).astype(np.float32)[..., 0]
+        img = (img - img.min()) / (img.max() - img.min())
+        img = img[None, ...]
+
+        masks = np.array(
+            [plt.imread(os.path.join(sub_path, "masks", m)) for m in mask_files]
+        )
+
         # get bounding box coordinates for each mask
         num_objs = len(mask_files)
         boxes = []
@@ -124,4 +130,4 @@ class BBBCDataset(torch.utils.data.Dataset):
         return img, target
 
     def __len__(self):
-        return len(self.subdirs) 
+        return len(self.subdirs)
