@@ -2,7 +2,7 @@ import torch
 from torchvision.models.detection import maskrcnn_resnet50_fpn
 from torchvision.models.detection.transform import GeneralizedRCNNTransform
 
-def make_mrcnn()
+def make_mrcnn():
     model = maskrcnn_resnet50_fpn(num_classes=2, pretrained_backbone=False)
     transform = GeneralizedRCNNTransform(min_size=800, max_size=1333, image_mean=[0], image_std=[0])
     model.transform = transform
