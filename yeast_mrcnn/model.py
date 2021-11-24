@@ -1,6 +1,11 @@
+__all__ = [
+    "make_mrcnn",
+]
+
 import torch
 from torchvision.models.detection import maskrcnn_resnet50_fpn
 from torchvision.models.detection.transform import GeneralizedRCNNTransform
+
 
 def make_mrcnn():
     model = maskrcnn_resnet50_fpn(num_classes=2, pretrained_backbone=False)
