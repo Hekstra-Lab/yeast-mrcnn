@@ -4,11 +4,12 @@ __all__ = [
 ]
 
 import os
-import torch
+
 import pandas as pd
+import torch
 
 
-def train_one_epoch(model, dataloader, optimizer):
+def train_one_epoch(model, dataloader, optimizer, device):
     loss_df = pd.DataFrame()
     for i, (images, targets) in enumerate(dataloader):
         images = list(image.to(device) for image in images)
@@ -33,20 +34,22 @@ def train_one_epoch(model, dataloader, optimizer):
         return loss_df.reset_index(drop=True)
 
 
-def train(model, dataloader, optimizer, epochs=100, output_every=5, output_dir="."):
+def train(
+    model, dataloader, optimizer, device, epochs=100, output_every=5, output_dir="."
+):
     big_df = pd.DataFrame()
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
 
     for e in range(epochs):
 
-        loss_df = train_one_epoch(model, dataloader, optimizer)
+        loss_df = train_one_epoch(model, dataloader, optimizer, device)
         if (e + 1) % output_every == 0 or (e + 1) == epochs:
             torch.save(model.state_dict(), output_dir + f"model_state_epoch_{e+1}.pt")
             print(
                 f"[Epoch {e+1}]"
                 + " ".join(
-                    [f"{l[5:]}={val:4g}" for l, val in loss_df.mean().iteritems()]
+                    f"{l[5:]}={val:4g}" for l, val in loss_df.mean().iteritems()
                 )
             )
 
