@@ -58,14 +58,14 @@ class YeaZDataset(torch.utils.data.Dataset):
         labels = torch.ones((num_objs,), dtype=torch.int64)
         masks = torch.as_tensor(masks, dtype=torch.uint8)
 
-        image_id = torch.tensor([idx])
+        # image_id = torch.tensor([idx])
         area = (boxes[:, 3] - boxes[:, 1]) * (boxes[:, 2] - boxes[:, 0])
 
         target = {}
         target["boxes"] = boxes
         target["labels"] = labels
         target["masks"] = masks
-        target["image_id"] = image_id
+        # target["image_id"] = image_id
         target["area"] = area
 
         if self.transforms is not None:
@@ -81,7 +81,7 @@ class BBBCDataset(torch.utils.data.Dataset):
     def __init__(self, root, transforms):
         self.root = root
         self.transforms = transforms
-        self.subdirs = os.listdir(root)
+        self.subdirs = sorted(os.listdir(root))
 
     def __getitem__(self, idx):
         # load images and masks
@@ -116,14 +116,14 @@ class BBBCDataset(torch.utils.data.Dataset):
         labels = torch.ones((num_objs,), dtype=torch.int64)
         masks = torch.as_tensor(masks, dtype=torch.uint8)
 
-        image_id = torch.tensor([idx])
+        # image_id = torch.tensor([idx])
         area = (boxes[:, 3] - boxes[:, 1]) * (boxes[:, 2] - boxes[:, 0])
 
         target = {}
         target["boxes"] = boxes
         target["labels"] = labels
         target["masks"] = masks
-        target["image_id"] = image_id
+        # target["image_id"] = image_id
         target["area"] = area
 
         if self.transforms is not None:

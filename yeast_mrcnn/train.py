@@ -4,13 +4,25 @@ __all__ = [
 ]
 
 import os
+import sys
 
+import numpy as np
 import pandas as pd
 import torch
 
 
-def train_one_epoch(model, dataloader, optimizer, device):
+def train_one_epoch(model, dataloader, optimizer, epoch, device):
     loss_df = pd.DataFrame()
+
+    lr_scheduler = None
+    if epoch == 0:
+        warmup_factor = 1.0 / 1000
+        warmup_iters = min(1000, len(dataloader) - 1)
+
+        lr_scheduler = torch.optim.lr_scheduler.LinearLR(
+            optimizer, start_factor=warmup_factor, total_iters=warmup_iters
+        )
+
     for i, (images, targets) in enumerate(dataloader):
         images = list(image.to(device) for image in images)
         targets = [{k: v.to(device) for k, v in t.items()} for t in targets]
@@ -31,11 +43,14 @@ def train_one_epoch(model, dataloader, optimizer, device):
         losses.backward()
         optimizer.step()
 
+        if lr_scheduler is not None:
+            lr_scheduler.step()
+
         return loss_df.reset_index(drop=True)
 
 
 def train(
-    model, dataloader, optimizer, device, epochs=100, output_every=5, output_dir="."
+    model, dataloader, optimizer, device, epochs=100, output_every=5, output_dir="./"
 ):
     big_df = pd.DataFrame()
     if not os.path.exists(output_dir):
@@ -43,17 +58,16 @@ def train(
 
     for e in range(epochs):
 
-        loss_df = train_one_epoch(model, dataloader, optimizer, device)
+        loss_df = train_one_epoch(model, dataloader, optimizer, e, device)
         if (e + 1) % output_every == 0 or (e + 1) == epochs:
             torch.save(model.state_dict(), output_dir + f"model_state_epoch_{e+1}.pt")
             print(
-                f"[Epoch {e+1}]"
-                + " ".join(
-                    f"{l[5:]}={val:4g}" for l, val in loss_df.mean().iteritems()
-                )
+                f"[Epoch {e+1}] "
+                + " ".join(f"{l[5:]}={val:4g}" for l, val in loss_df.mean().iteritems())
             )
 
         loss_df["epoch"] = e
-        big_df.append(loss_df)
+        big_df = big_df.append(loss_df)
 
     big_df.to_csv(output_dir + "loss_log.csv")
+    return big_df
