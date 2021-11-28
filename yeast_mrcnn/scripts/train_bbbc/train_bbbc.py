@@ -22,7 +22,7 @@ model = make_mrcnn()
 
 model = model.to(device)
 
-optimizer = torch.optim.Adam(model.parameters())
+optimizer = torch.optim.Adam(model.parameters(), lr=1e-4)
 
 dataloader = DataLoader(
     BBBCDataset(training_root, None), batch_size=4, collate_fn=collate_fn
