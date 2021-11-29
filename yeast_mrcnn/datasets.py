@@ -95,7 +95,7 @@ class BBBCDataset(torch.utils.data.Dataset):
         img = img[None, ...]
 
         masks = np.array(
-            [imread(os.path.join(sub_path, "masks", m)) for m in mask_files]
+            [imread(os.path.join(sub_path, "masks", m)) // 255 for m in mask_files]
         )
 
         # get bounding box coordinates for each mask
