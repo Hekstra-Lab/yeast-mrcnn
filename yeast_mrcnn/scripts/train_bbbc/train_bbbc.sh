@@ -9,5 +9,4 @@
 #SBATCH -o output.txt
 #SBATCH -e errors.txt
 
-module load cudnn/8.1.0.77_cuda11.2-fasrc01
-python train_bbbc.py /n/holyscratch01/hekstra_lab/russell/bbbc_nuclei/train/ ~/microscopy-notebooks/yeast_mrcnn_train cuda
+python train_bbbc.py /n/holyscratch01/hekstra_lab/russell/bbbc_nuclei/train/ ~/microscopy-notebooks/yeast_mrcnn_train/ cuda

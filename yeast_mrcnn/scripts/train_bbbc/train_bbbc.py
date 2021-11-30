@@ -9,10 +9,10 @@ import sys
 import torch
 from torch.utils.data import DataLoader
 
-from ._util import collate_fn
-from .datasets import BBBCDataset
-from .model import make_mrcnn
-from .train import train
+from yeast_mrcnn._util import collate_fn
+from yeast_mrcnn.datasets import BBBCDataset
+from yeast_mrcnn.model import make_mrcnn
+from yeast_mrcnn.train import train
 
 training_root = sys.argv[1]
 output_dir = sys.argv[2]
@@ -34,6 +34,6 @@ train(
     optimizer,
     device,
     output_dir=output_dir,
-    epoch=100,
-    output_every=5,
+    epochs=1000,
+    output_every=50,
 )

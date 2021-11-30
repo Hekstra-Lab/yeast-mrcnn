@@ -63,7 +63,8 @@ def train(
             torch.save(model.state_dict(), output_dir + f"model_state_epoch_{e+1}.pt")
             print(
                 f"[Epoch {e+1}] "
-                + " ".join(f"{l[5:]}={val:4g}" for l, val in loss_df.mean().iteritems())
+                + " ".join(f"{l[5:]}={val:4g}" for l, val in loss_df.mean().iteritems()),
+                flush=True,
             )
 
         loss_df["epoch"] = e
