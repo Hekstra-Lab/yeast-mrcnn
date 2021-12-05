@@ -1,6 +1,7 @@
 __all__ = [
     "train_one_epoch",
     "train",
+    "evaluate_test",
 ]
 
 import os
@@ -63,7 +64,10 @@ def train(
             torch.save(model.state_dict(), output_dir + f"model_state_epoch_{e+1}.pt")
             print(
                 f"[Epoch {e+1}] "
-                + " ".join(f"{l[5:]}={val:4g}" for l, val in loss_df.mean().iteritems()),
+                + " ".join(
+                    f"{loss_name[5:]}={val:4g}"
+                    for loss_name, val in loss_df.mean().iteritems()
+                ),
                 flush=True,
             )
 
@@ -72,3 +76,8 @@ def train(
 
     big_df.to_csv(output_dir + "loss_log.csv")
     return big_df
+
+
+def evaluate_test(model, dataloader):
+
+    pass

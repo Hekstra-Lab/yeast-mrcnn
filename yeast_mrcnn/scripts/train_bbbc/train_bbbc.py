@@ -9,10 +9,10 @@ import sys
 import torch
 from torch.utils.data import DataLoader
 
-from yeast_mrcnn._util import collate_fn
 from yeast_mrcnn.datasets import BBBCDataset
 from yeast_mrcnn.model import make_mrcnn
 from yeast_mrcnn.train import train
+from yeast_mrcnn.util import collate_fn
 
 training_root = sys.argv[1]
 output_dir = sys.argv[2]
