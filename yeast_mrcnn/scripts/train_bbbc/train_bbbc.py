@@ -7,7 +7,7 @@
 import sys
 
 import torch
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, random_split
 
 from yeast_mrcnn.datasets import BBBCDataset
 from yeast_mrcnn.model import make_mrcnn
@@ -24,13 +24,19 @@ model = model.to(device)
 
 optimizer = torch.optim.Adam(model.parameters(), lr=1e-4)
 
-dataloader = DataLoader(
-    BBBCDataset(training_root, None), batch_size=4, collate_fn=collate_fn
+dataset = BBBCDataset(training_root, None)
+
+train_ds, test_ds = random_split(
+    dataset, [int(0.85 * len(dataset)), int(0.15 * len(dataset))]
 )
+
+train_dataloader = DataLoader(train_ds, batch_size=4, collate_fn=collate_fn)
+test_dataloader = DataLoader(train_ds, batch_size=1, collate_fn=collate_fn)
 
 train(
     model,
-    dataloader,
+    train_dataloader,
+    test_dataloader,
     optimizer,
     device,
     output_dir=output_dir,
