@@ -15,6 +15,7 @@ from .util import mean_matched_iou, torch_masks_to_labels
 
 
 def train_one_epoch(model, dataloader, optimizer, epoch, device):
+
     loss_df = pd.DataFrame()
 
     lr_scheduler = None
@@ -49,7 +50,7 @@ def train_one_epoch(model, dataloader, optimizer, epoch, device):
         if lr_scheduler is not None:
             lr_scheduler.step()
 
-        return loss_df.reset_index(drop=True)
+    return loss_df.reset_index(drop=True)
 
 
 def train(
@@ -66,9 +67,12 @@ def train(
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
 
+    model.train()
+
     for e in range(epochs):
 
         loss_df = train_one_epoch(model, train_dataloader, optimizer, e, device)
+
         if (e + 1) % output_every == 0 or (e + 1) == epochs:
             torch.save(model.state_dict(), output_dir + f"model_state_epoch_{e+1}.pt")
             print(
@@ -93,7 +97,6 @@ def train(
 def evaluate_test(model, dataloader, device):
     model.eval()
     with torch.no_grad():
-
         matched_ious = []
         for i, (images, targets) in enumerate(dataloader):
             images = list(image.to(device) for image in images)
@@ -101,11 +104,14 @@ def evaluate_test(model, dataloader, device):
 
             predictions = model(images)
 
-            true_mask = torch_masks_to_labels(targets["masks"])
-            pred_mask = torch_masks_to_labels(predictions["masks"])
+            true_mask = torch_masks_to_labels(targets[0]["masks"])
+            pred_mask = torch_masks_to_labels(predictions[0]["masks"])
 
             miou = mean_matched_iou(pred_mask, true_mask)
             matched_ious.append(miou)
 
     model.train()
-    return np.mean(matched_ious), np.std(matched_ious)
+    if len(matched_ious) > 0:
+        return np.mean(matched_ious), np.std(matched_ious)
+    else:
+        return np.nan, np.nan
