@@ -10,7 +10,7 @@ import numpy as np
 import tifffile as tiff
 import torch
 
-from ._util import imread
+from .util import imread
 
 
 class TiffDataset(torch.utils.data.Dataset):
