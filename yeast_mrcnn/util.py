@@ -22,9 +22,12 @@ def collate_fn(batch):
 
 
 def torch_masks_to_labels(t, mask_thresh=0.5):
-    scales = np.arange(t.shape[0])[:, None, None] + 1
-    masks = t.detach().numpy().squeeze() > mask_thresh
-    return np.max(scales * masks, axis=0)
+    if t.shape[0] == 0:
+        return np.zeros(t.shape[-2:], dtype=int)
+    else:
+        scales = np.arange(t.shape[0])[:, None, None] + 1
+        masks = t.detach().cpu().numpy().squeeze() > mask_thresh
+        return np.max(scales * masks, axis=0)
 
 
 def relabel_predicted_masks(predicted, ground_truth):
@@ -58,7 +61,7 @@ def mean_matched_iou(pred, truth):
     relabelled_pred = relabel_predicted_masks(pred, truth)
     matches = np.array(
         list(set(np.unique(relabelled_pred)[1:]) & set(np.unique(truth)[1:]))
-    )
+    ).astype(int)
     intersections = overlap(relabelled_pred, truth)[matches, matches]
     unions = np.sum(
         (relabelled_pred[..., None] == matches) | (truth[..., None] == matches),

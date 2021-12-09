@@ -15,6 +15,7 @@ from .validation import matched_box_iou, matched_mask_iou
 
 
 def train_one_epoch(model, dataloader, optimizer, epoch, device):
+
     loss_df = pd.DataFrame()
 
     lr_scheduler = None
@@ -49,7 +50,7 @@ def train_one_epoch(model, dataloader, optimizer, epoch, device):
         if lr_scheduler is not None:
             lr_scheduler.step()
 
-        return loss_df.reset_index(drop=True)
+    return loss_df.reset_index(drop=True)
 
 
 def train(
@@ -66,9 +67,12 @@ def train(
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
 
+    model.train()
+
     for e in range(epochs):
 
         loss_df = train_one_epoch(model, train_dataloader, optimizer, e, device)
+
         if (e + 1) % output_every == 0 or (e + 1) == epochs:
             torch.save(model.state_dict(), output_dir + f"model_state_epoch_{e+1}.pt")
             print(
@@ -89,9 +93,7 @@ def train(
 
 
 def evaluate_test(model, dataloader, device):
-    model.eval()
-    # with torch.no_grad():
-
+    model.eval()  # cant use no_grad here bc of optimization in validation
     mask_ious = []
     box_ious = []
     for i, (images, targets) in enumerate(dataloader):
@@ -109,6 +111,7 @@ def evaluate_test(model, dataloader, device):
         box_ious.append(matched_box_iou(pred_boxes, true_boxes))
 
     model.train()
+
     out = pd.DataFrame(
         [[np.mean(mask_ious), np.std(mask_ious), np.mean(box_ious), np.std(box_ious)]],
         columns=["mmask-iou-mean", "mmask-iou-std", "mbox-iou-mean", "mbox-iou-std"],
