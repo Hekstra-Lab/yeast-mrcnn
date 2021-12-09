@@ -11,7 +11,7 @@ import numpy as np
 import pandas as pd
 import torch
 
-from .util import mean_matched_iou, torch_masks_to_labels
+from .validation import matched_box_iou, matched_mask_iou
 
 
 def train_one_epoch(model, dataloader, optimizer, epoch, device):
@@ -81,9 +81,7 @@ def train(
             )
 
         loss_df["epoch"] = e
-        loss_df[["matched-iou-mean", "matched-iou-std"]] = evaluate_test(
-            model, val_dataloader, device
-        )
+        loss_df = loss_df.join(evaluate_test(model, val_dataloader, device))
         big_df = big_df.append(loss_df)
 
     big_df.to_csv(output_dir + "loss_log.csv")
@@ -92,20 +90,27 @@ def train(
 
 def evaluate_test(model, dataloader, device):
     model.eval()
-    with torch.no_grad():
+    # with torch.no_grad():
 
-        matched_ious = []
-        for i, (images, targets) in enumerate(dataloader):
-            images = list(image.to(device) for image in images)
-            targets = [{k: v.to(device) for k, v in t.items()} for t in targets]
+    mask_ious = []
+    box_ious = []
+    for i, (images, targets) in enumerate(dataloader):
+        images = list(image.to(device) for image in images)
+        targets = [{k: v.to(device) for k, v in t.items()} for t in targets]
 
-            predictions = model(images)
+        predictions = model(images)
 
-            true_mask = torch_masks_to_labels(targets["masks"])
-            pred_mask = torch_masks_to_labels(predictions["masks"])
+        pred_mask = predictions[0]["masks"]
+        pred_boxes = predictions[0]["boxes"]
+        true_mask = targets[0]["masks"]
+        true_boxes = targets[0]["boxes"]
 
-            miou = mean_matched_iou(pred_mask, true_mask)
-            matched_ious.append(miou)
+        mask_ious.append(matched_mask_iou(pred_mask, true_mask))
+        box_ious.append(matched_box_iou(pred_boxes, true_boxes))
 
     model.train()
-    return np.mean(matched_ious), np.std(matched_ious)
+    out = pd.DataFrame(
+        [[np.mean(mask_ious), np.std(mask_ious), np.mean(box_ious), np.std(box_ious)]],
+        columns=["mmask-iou-mean", "mmask-iou-std", "mbox-iou-mean", "mbox-iou-std"],
+    )
+    return out
