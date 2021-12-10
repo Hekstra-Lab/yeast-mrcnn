@@ -2,6 +2,7 @@ __all__ = [
     "get_assignments",
     "matched_mask_iou",
     "matched_box_iou",
+    "box_matched_mask_iou",
 ]
 
 import torch
@@ -30,21 +31,31 @@ def get_assignments(cost_matrix, alpha):
         The assignment of each row of the cost matrix.
     """
 
-    match_mat = torch.randn(
-        cost_matrix.shape, requires_grad=True, device=cost_matrix.device
-    )
-    opt = torch.optim.Adam([match_mat], lr=0.1)
+    with torch.enable_grad():
+        match_mat = torch.randn(
+            cost_matrix.shape, requires_grad=True, device=cost_matrix.device
+        )
+        opt = torch.optim.Adam([match_mat], lr=0.1)
 
-    for i in range(50):
-        scaled_matches = match_mat.softmax(1)
-        loss = (1 - alpha) * (
-            scaled_matches * cost_matrix
-        ).sum() + alpha * scaled_matches.sum()
-        opt.zero_grad()
-        loss.backward()
-        opt.step()
+        for i in range(50):
+            scaled_matches = match_mat.softmax(1)
+            loss = (1 - alpha) * (
+                scaled_matches * cost_matrix
+            ).sum() + alpha * scaled_matches.sum()
+            opt.zero_grad()
+            loss.backward()
+            opt.step()
 
     matches = match_mat.argmax(1)
+
+    # matched, inverse, counts = torch.unique(matches,return_inverse=True, return_counts=True)
+    # TODO eliminate duplicate assignments
+    # for i,(m, c) in enumerate(zip(matched, counts)):
+    #     if c > 1:
+    #         idx inverse==i
+    #         row = torch.arange(match_mat.shape[0])[idx]
+    #         torch.argmin(cost_matrix[rows,m])
+
     assignment_cost = (
         -1 * cost_matrix[torch.arange(cost_matrix.shape[0]), matches].mean().item()
     )
@@ -112,3 +123,14 @@ def matched_box_iou(pred_boxes, true_boxes, return_matches=False, alpha=0.25):
 
     else:
         return assignment_cost
+
+
+def box_matched_mask_iou(matches, pred_masks, true_mask):
+    aligned_pred_mask = pred_masks.squeeze()[matches]
+
+    intersections = (aligned_pred_mask & true_mask).sum(-1, -2)
+    unions = (aligned_pred_mask | true_mask).sum((-1, -2))
+
+    ious = intersections / unions
+
+    return ious.mean().item()
