@@ -3,6 +3,7 @@ __all__ = [
     "collate_fn",
     "torch_masks_to_labels",
     "relabel_predicted_masks",
+    "torch_ready",
 ]
 from pathlib import Path
 from typing import Union
@@ -68,3 +69,12 @@ def mean_matched_iou(pred, truth):
         axis=(0, 1),
     )
     return np.mean(intersections / unions)
+
+
+def torch_ready(arr):
+    arr_min = arr.min((-2, -1), keepdims=True)
+    arr_max = arr.max((-2, -1), keepdims=True)
+    normalized = (arr - arr_min) / (arr_max - arr_min)
+
+    expanded = normalized[..., None, :, :].repeat(3, -3).astype("float32")
+    return expanded
