@@ -16,18 +16,16 @@ def create_stores(parent_path, shape):
     score_store = zarr.empty(shape, dtype="array:f4", store=path / "scores.zarr")
     data_store = zarr.empty(shape, dtype="array:f4", store=path / "mask_data.zarr")
     coord_store = zarr.empty(
-        (*shape, 3), dtype="array:i4", store=path / "mask_coords.zarr"
+        (*shape, 3),
+        dtype="array:i4",
+        store=path / "mask_coords.zarr",
+        chunks=(-1, -1, 1),
     )
     return score_store, data_store, coord_store
 
 
 def dump_to_zarr(store, inds, data):
     store[inds] = data
-
-
-def dump_coords(store, inds, coords):
-    for i in range(len(coords)):
-        store[(*inds, i)] = coords[i]
 
 
 def get_batch_inds(shape, batch_size):
@@ -65,15 +63,13 @@ def predict(model, image_stack, output_path, client, batch_size=10, device="cuda
                     client.submit(dump_to_zarr, data_store, store_idx, f_masks_data)
                 )
 
-                mask_coords = np.stack(
-                    tuple(m.to(torch.int32).cpu().numpy() for m in mask_coords)
-                )
-                f_coords = client.scatter(mask_coords)
-                fire_and_forget(
-                    client.submit(dump_coords, coord_store, store_idx, f_coords)
-                )
-
                 f_scores = client.scatter(p["scores"].detach().cpu().numpy())
                 fire_and_forget(
                     client.submit(dump_to_zarr, score_store, store_idx, f_scores)
                 )
+
+                for k, c in enumerate(mask_coords):
+                    fc = client.scatter(c.to(torch.int32).cpu().numpy())
+                    fire_and_forget(
+                        client.submit(dump_to_zarr, coord_store, (*store_idx, k), fc)
+                    )
