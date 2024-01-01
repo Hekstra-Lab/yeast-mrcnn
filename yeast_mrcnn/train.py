@@ -15,7 +15,6 @@ from .validation import matched_box_iou
 
 
 def train_one_epoch(model, dataloader, optimizer, epoch, device):
-
     loss_df = pd.DataFrame()
 
     lr_scheduler = None
@@ -70,7 +69,6 @@ def train(
     model.train()
 
     for e in range(epochs):
-
         loss_df = train_one_epoch(model, train_dataloader, optimizer, e, device)
 
         loss_df = loss_df.join(evaluate_test(model, val_dataloader, device))
