@@ -33,7 +33,7 @@ def mrcnn():
     )
 
     # Make anchor generator with 3 sizes per feature map and 5 aspect ratios
-    sizes = tuple(2.0 ** x for x in range(5, 12))
+    sizes = tuple(2.0**x for x in range(5, 12))
     aspects = tuple(0.5 * x for x in range(1, 5))
     n_feature_maps = 5  # true for resnet50 with FPN
     ag_sizes = tuple(tuple(sizes[i : i + 3]) for i in range(n_feature_maps))
